@@ -53,10 +53,9 @@ Now that MinGW/G++ is installed, we need to make sure VSCode uses it when provid
 
 At this point, try writing a simple HelloWorld.cpp file using iostream to be sure that all libraries/compilers are in place and working. 
 
-## Working with Libraries (SFML)
-Fortunately for us, when installing GCC with the commands above, it includes the standard library along with it. However, installing third party libraries, i.e. SFML, is a bit more difficult than on Linux. 
+## Working with CMake and SFML
+We're going to be installing CMake for this tutorial. Technically, if you just install SFML with the instructions shown later, you can use the compilation commands that the teacher provides. However, CMake allows for very nuanced configurations that are quite painful with manual terminal commands. In my final project, the order of compilation was very important, and simply running the compilation/linking command didn't work; it would require running several commands all at once, and even more if I had added more subfolders. CMake makes (hah) it so that you can press a single button, and everything just works. It's highly recommended for larger-scale projects.
 
-On Linux, you would simply install the libraries you want with Apt, after which the headers/.a files would be found in `/lib`, which GCC looks at automatically. Unfortunately, in Windows, common libraries can be stored nearly anywhere on your computer, so by default you have to install them to the proper directory. Rather than download SFML and attempt to link it manually--which in my experience is immensely tedious with G++--we'll simply be using CMake, an advanced build tool for C and C++, to do the hard work for us. 
 ### Installing CMake
 Open a terminal and type the following command: 
 
@@ -74,9 +73,56 @@ A complete CMake + VSCode guide can be found [here](https://code.visualstudio.co
 Download the [CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) extension for VSCode, which is an official Microsoft addon. Once it is installed, it is recommended to restart VSCode for it to fully take effect. 
 
 ### Finally, SFML
-Go to the directory where you want to work on your project (you will likely want to clone the project/your branch here). For this particular project, put any .cpp/.h/.hpp files in `<repo directory>/src`, as this is where CMake will look when compiling the project (it is recommended to put a blank `main.cpp` file there before continuing). 
-From here, download the `CMakeLists.txt` file from the [SFML CMake template repo](https://github.com/SFML/cmake-sfml-project), and store it in the root directory of the project. 
-Your file structure should look something like this:
+In a previous iteration of this guide, I showed off how to download the SFML source code and compile that for yourself for minimal compatibility issues. Unfortunately, their version of many libraries was built with MSVC, causing inconsistencies with G++ on Windows. Fortunately, MSYS2 allows us to download packages that pull the MinGW version of those libraries, and they work flawlessly.
+
+In your MSYS2 UCRT terminal, run the following command to download SFML and all its dependencies. 
+
+```
+pacman -S mingw-w64-ucrt-x86_64-sfml
+```
+
+### Configuring CMake
+
+In the root directory, make a file called `CMakeLists.txt`. This is the script that is responsible for configuring everything build-related and also doing some file manipulation.
+
+This is the `CMakeLists` file that I use:
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(CmakeSFMLProject LANGUAGES CXX)
+
+set(OPENAL_PATH "C:/Development/Tools/ucrt64/bin/libopenal-1.dll" CACHE PATH "Path to OpenAL directory")
+# ^ Make sure to put the path to your libopenal.dll file here. It's necessary if your program uses sound!
+# It's worth noting that this appears in your CMake cache as well, which can be edited in the VSCode GUI
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+# This recursively compiles .cpp files, which is important for making sure they compile in the right order.
+
+add_executable(Asteroids ${SOURCES})
+target_link_libraries(CmakeSFMLProject PRIVATE sfml-graphics sfml-audio sfml-window sfml-system)
+# This is where the linking happens. 
+
+target_compile_features(CmakeSFMLProject PRIVATE cxx_std_20)
+# You can set your preferred C++ standard here, as well as other compiler parameters such as -Wall
+
+if(WIN32)
+    add_custom_command(
+        TARGET Asteroids
+        COMMENT "Copy OpenAL DLL"
+        PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy "C:/msys64/ucrt64/bin/libopenal-1.dll" $<TARGET_FILE_DIR:CmakeSFMLProject>
+        VERBATIM)
+endif()
+# This copies the OpenAl DLL to the bin folder.
+
+install(TARGETS CmakeSFMLProject)
+```
+
+It might be a good place to start when building your own.
+
+Once everything is done, your file structure should look something like this:
 
 ![codium](./images/cpp-dev/VSCodium_3WSl1ALh24.png)
 
@@ -91,29 +137,12 @@ Under **Project Status/Configure**, hover over **Configure** --> **\[No Kit Sele
 ![kit](./images/cpp-dev/SelectKit.png)
 
 #### Building SFML and the Project
-CMake may potentially start building SFML from source right away; if it doesn't, go down to **Project Outline/SFML** and select **Build** (a small box with circles/an arrow). This will download and build SFML with G++ automatically. 
-
-Once it is completed building (you should see exit code 0), copy the [green circle demo](https://www.sfml-dev.org/tutorials/2.6/start-linux.php#compiling-a-sfml-program) to `src/main.cpp`. Finally, select **Build** next to **Project Outline** --> **CMakeSFMLProject**, which will build the application and link the library properly. (Tip: You can also right click on this entry and select **Run in terminal**, which will build the project and run it automatically.)
+To test that everything is working as expected, copy the [green circle demo](https://www.sfml-dev.org/tutorials/2.6/start-linux.php#compiling-a-sfml-program) to `src/main.cpp`. Finally, select **Build** next to **Project Outline** --> **CMakeSFMLProject**, which will build the application and link the library properly. (Tip: You can also right click on this entry and select **Run in terminal**, which will build the project and run it automatically.)
 
 ![build](./images/cpp-dev/CMakeBuild.png)
 
-If all compiles successfully, you should see the final executable `CMakeSFMLProject.exe` under `build/bin`, along with `openal32.dll`, which is the dynamic library required for it to run. Any subsequent tests will require you to re-build using the **CMakeSFMLProject** build button, or running **Build** under **Project Status**. There's generally no need to rebuild SFML, so you can ignore that area of the CMake 
+If all compiles successfully, you should see the final executable `CMakeSFMLProject.exe` under `build/bin`, along with `openal32.dll`, which is the dynamic library required for it to run. Any subsequent tests will require you to re-build using the **CMakeSFMLProject** build button, or running **Build** under **Project Status**. One handy feature of Make (the build system that CMake configures) is that it doesn't compile *everything* unnecessarily. That means in a project with dozens of compilation units, a single change won't take 20+ seconds to recompile. 
 
-A couple things to keep in mind for working with SFML in this context:
-
-**.gitignore**: `/build` contains all of the files for SFML to be compiled. Since our CMake file pulls SFML for us automatically, it's likely best to include `/build` in the `.gitignore` file so that it doesn't back up a lot of duplicate data. Anyone building it on their machine with the current template will have all the files they need. 
-
-**Multiple compilation units**: By default, the SFML CMake template only allows for a single file. Thankfully, all you need to do is add the following line before the `addexecutable()` function:
-
-```
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-```
-
-and change `src/main.cpp` in the `addexecutable()` function to `${SOURCES}`, so that it looks like this: 
-
-```
-add_executable(CMakeSFMLProject ${SOURCES})
-```
 ## Done!
 
 And that's everything! You should be completely set up for developing C++ on Windows for CS 151. Note that there are many nuances to this process compared to Linux that are outside the scope of this guide, but this should be plenty of info to have a good foundation. 
