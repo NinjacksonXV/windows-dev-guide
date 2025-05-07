@@ -1,5 +1,5 @@
 ## Setting up Compilation
-The steps found in this section can be found in its entirety [in the VSCode documentation](https://code.visualstudio.com/docs/cpp/config-mingw#_prerequisites). 
+The steps found in this section can also be found [in the VSCode MSYS2 documentation](https://code.visualstudio.com/docs/cpp/config-mingw#_prerequisites). 
 ___
 ### Setting up VSCode (pt. 1)
 You probably already have VSCode installed. If not, [download and install it](https://code.visualstudio.com/download). 
@@ -101,7 +101,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 # This recursively compiles .cpp files, which is important for making sure they compile in the right order.
 
-add_executable(Asteroids ${SOURCES})
+add_executable(<game name> ${SOURCES})
 target_link_libraries(CmakeSFMLProject PRIVATE sfml-graphics sfml-audio sfml-window sfml-system)
 # This is where the linking happens. 
 
