@@ -1,11 +1,3 @@
-### Terminal
-In short, a terminal (in a desktop context, anyways) is simply an application that acts as a front end for your shell. Most desktop environments come with a basic one, but you can download third-party terminals which offer better/advanced features.
-
-Unless you have a preference as to which terminal emulator to use (in which case you probably don't need to read this guide), do yourself a favor and install the Windows Terminal, [found in the Windows Store](https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-US&gl=US). It is highly customizable, and you can add any number of shells to it, including the Ubuntu shell ([guide found here](https://ddh4r4m.medium.com/how-to-add-ubuntu-tab-to-windows-10s-new-terminal-271eb6dfd8ee)). You can customize it visually with custom colors, backgrounds, and even shell prompts like [Oh My Posh](https://ohmyposh.dev/docs/installation/windows).
-
-This is what my terminal/shell looks like after some customizations.
-
-![myterminal](./images/shell/WindowsTerminal_RNIDtR980R.png)
 ### PowerShell 7
 It is *highly* recommended that you install PowerShell 7 in favor of Microsoft PowerShell (or PowerShell 1.0). Microsoft PowerShell ships with Windows by default and is missing *many* features compared to PowerShell 7.
 Install it with the following command:
